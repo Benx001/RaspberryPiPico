@@ -6,6 +6,7 @@
  Copyright (C) 2010 Limor Fried, Adafruit Industries
  CORTEX-M3 version by Le Dang Dung, 2011 LeeDangDung@gmail.com (tested on LPC1769)
  Raspberry Pi version by Andre Wussow, 2012, desk@binerry.de
+ Raspberry Pi Pico version by Benx001, 2022
 
  Description : PCD8544 LCD library!
 
@@ -50,10 +51,6 @@ Lesser General Public License for more details.
 #define PCD8544_SETVOP 0x80
 
 #define swap(a, b) { uint8_t t = a; a = b; b = t; }
-
- // calibrate clock constants
-#define CLKCONST_1  8000
-#define CLKCONST_2  400  // 400 is a good tested value for Raspberry Pi
 
 // keywords
 #define LSBFIRST  0
