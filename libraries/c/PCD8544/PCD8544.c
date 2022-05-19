@@ -1,4 +1,4 @@
-/*
+/**
 =================================================================================
  Name        : PCD8544.c
  Version     : 0.1
@@ -6,23 +6,24 @@
  Copyright (C) 2010 Limor Fried, Adafruit Industries
  CORTEX-M3 version by Le Dang Dung, 2011 LeeDangDung@gmail.com (tested on LPC1769)
  Raspberry Pi version by Andre Wussow, 2012, desk@binerry.de
+ Raspberry Pi Pico version by Benx001, 2022
 
  Description :
-     A simple PCD8544 LCD (Nokia3310/5110) driver. Target board is Raspberry Pi.
+     A simple PCD8544 LCD (Nokia3310/5110) driver. Target board is Raspberry Pi Pico.
      This driver uses 5 GPIOs on target board with a bit-bang SPI implementation
      (hence, may not be as fast).
-	 Makes use of WiringPI-library of Gordon Henderson (https://projects.drogon.net/raspberry-pi/wiringpi/)
 
-	 Recommended connection (http://www.raspberrypi.org/archives/384):
-	 LCD pins      Raspberry Pi
-	 LCD1 - GND    P06  - GND
-	 LCD2 - VCC    P01 - 3.3V
-	 LCD3 - CLK    P11 - GPIO0
-	 LCD4 - Din    P12 - GPIO1
-	 LCD5 - D/C    P13 - GPIO2
-	 LCD6 - CS     P15 - GPIO3
-	 LCD7 - RST    P16 - GPIO4
-	 LCD8 - LED    P01 - 3.3V 
+	 Recommended connection:
+	 LCD pins		Raspberry Pi Pico
+	 LCD1 - GND		P18	-	GND
+	 LCD2 - VCC		P36	-	3.3V
+	 LCD3 - CLK		P14	-	GP10
+	 LCD4 - Din		P15	-	GP11
+	 LCD5 - D/C		P16	-	GP12
+	 LCD6 - CS		P17	-	GP13
+	 LCD7 - RST		P19	-	GP14
+	 LCD8 - LED    	P36	-	3.3V
+	 
 
  References  :
  http://www.arduino.cc/playground/Code/PCD8544
@@ -41,7 +42,6 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 Lesser General Public License for more details.
 ================================================================================
  */
-#include <wiringPi.h>
 #include "PCD8544.h"
 
 // An abs() :)
@@ -49,6 +49,9 @@ Lesser General Public License for more details.
 
 // bit set
 #define _BV(bit) (0x1 << (bit))
+
+#define LOW 0
+#define HIGH 1
 
 // LCD port variables
 static uint8_t cursor_x, cursor_y, textsize, textcolor;
@@ -402,20 +405,25 @@ void LCDInit(uint8_t SCLK, uint8_t DIN, uint8_t DC, uint8_t CS, uint8_t RST, uin
 	textsize = 1;
 	textcolor = BLACK;
 
+	gpio_init(_din);
+	gpio_init(_sclk);
+	gpio_init(_dc);
+	gpio_init(_rst);
+	gpio_init(_cs);
 	// set pin directions
-	pinMode(_din, OUTPUT);
-	pinMode(_sclk, OUTPUT);
-	pinMode(_dc, OUTPUT);
-	pinMode(_rst, OUTPUT);
-	pinMode(_cs, OUTPUT);
+	gpio_set_dir(_din, GPIO_OUT);
+	gpio_set_dir(_sclk, GPIO_OUT);
+	gpio_set_dir(_dc, GPIO_OUT);
+	gpio_set_dir(_rst, GPIO_OUT);
+	gpio_set_dir(_cs, GPIO_OUT);
 
 	// toggle RST low to reset; CS low so it'll listen to us
 	if (_cs > 0)
-		digitalWrite(_cs, LOW);
+		gpio_put(_cs, LOW);
 
-	digitalWrite(_rst, LOW);
+	gpio_put(_rst, LOW);
 	_delay_ms(500);
-	digitalWrite(_rst, HIGH);
+	gpio_put(_rst, HIGH);
 
 	// get into the EXTENDED mode!
 	LCDcommand(PCD8544_FUNCTIONSET | PCD8544_EXTENDEDINSTRUCTION );
@@ -730,18 +738,24 @@ uint8_t LCDgetPixel(uint8_t x, uint8_t y)
 
 void LCDspiwrite(uint8_t c)
 {
+	gpio_put(_cs, LOW);
+
 	shiftOut(_din, _sclk, MSBFIRST, c);
+
+	gpio_put(_cs, HIGH);
+
+
 }
 
 void LCDcommand(uint8_t c)
 {
-	digitalWrite( _dc, LOW);
+	gpio_put( _dc, LOW);
 	LCDspiwrite(c);
 }
 
 void LCDdata(uint8_t c)
 {
-	digitalWrite(_dc, HIGH);
+	gpio_put(_dc, HIGH);
 	LCDspiwrite(c);
 }
 
@@ -814,7 +828,6 @@ void LCDclear(void) {
 	cursor_y = cursor_x = 0;
 }
 
-// bitbang serial shift out on select GPIO pin. Data rate is defined by CPU clk speed and CLKCONST_2. 
 // Calibrate these value for your need on target platform.
 void shiftOut(uint8_t dataPin, uint8_t clockPin, uint8_t bitOrder, uint8_t val)
 {
@@ -823,25 +836,18 @@ void shiftOut(uint8_t dataPin, uint8_t clockPin, uint8_t bitOrder, uint8_t val)
 
 	for (i = 0; i < 8; i++)  {
 		if (bitOrder == LSBFIRST)
-			digitalWrite(dataPin, !!(val & (1 << i)));
+			gpio_put(dataPin, !!(val & (1 << i)));
 		else
-			digitalWrite(dataPin, !!(val & (1 << (7 - i))));
+			gpio_put(dataPin, !!(val & (1 << (7 - i))));
 
-		digitalWrite(clockPin, HIGH);
-		for (j = CLKCONST_2; j > 0; j--); // clock speed, anyone? (LCD Max CLK input: 4MHz)
-		digitalWrite(clockPin, LOW);
+		gpio_put(clockPin, HIGH);
+		sleep_us(5);
+		gpio_put(clockPin, LOW);
 	}
 }
 
-// roughly calibrated spin delay
+// spin delay
 void _delay_ms(uint32_t t)
 {
-	uint32_t nCount = 0;
-	while (t != 0)
-	{
-		nCount = CLKCONST_1;
-		while(nCount != 0)
-			nCount--;
-		t--;
-	}
+	sleep_ms(t);
 }
