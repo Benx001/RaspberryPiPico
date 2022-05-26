@@ -6,7 +6,7 @@ This driver uses 5 GPIOs on target board with a bit-bang SPI implementation (hen
 Copyright (C) 2010 _Limor Fried_, _Adafruit Industries_
 CORTEX-M3 version by _Le Dang Dung_, 2011 LeeDangDung@gmail.com (tested on LPC1769)
 Raspberry Pi version by _Andre Wussow_, 2012, desk@binerry.de
-Raspberry Pi Pico version by Benx001, 2022
+Raspberry Pi Pico version by _Benjamín Morales_, 2022, benminm@gmail.com
 
 For more informations please visit http://binerry.de/post/25787954149/pcd8544-library-for-raspberry-pi.
 
