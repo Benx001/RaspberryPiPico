@@ -6,7 +6,7 @@
  Copyright (C) 2010 Limor Fried, Adafruit Industries
  CORTEX-M3 version by Le Dang Dung, 2011 LeeDangDung@gmail.com (tested on LPC1769)
  Raspberry Pi version by Andre Wussow, 2012, desk@binerry.de
- Raspberry Pi Pico version by Benx001, 2022
+ Raspberry Pi Pico version by _Benjamín Morales_, 2022, benminm@gmail.com
 
  Description :
      A simple PCD8544 LCD (Nokia3310/5110) driver. Target board is Raspberry Pi Pico.
